@@ -70,9 +70,6 @@ app.get("/auth",function(req,res){
             console.log(token);
         }
         
-        
-    
-
 });
 
 
