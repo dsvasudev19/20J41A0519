@@ -2,9 +2,10 @@ const express=require("express")
 const axios=require("axios");
 
 const app=express();
-
-
-let bearerToken;
+let trains=[];
+let train;
+let token;
+let bearerToken="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTU0NTcyNTMsImNvbXBhbnlOYW1lIjoiVHJhaW4gQ2VudHJhbCIsImNsaWVudElEIjoiOTY5MDRmNzItMTdjNy00MzY1LThkYTEtOTRmZWFhZWRlMTkwIiwib3duZXJOYW1lIjoiIiwib3duZXJFbWFpbCI6IiIsInJvbGxObyI6IjIwSjQxQTA1MTkifQ.oYxQfRaOcaeaPLogIx_VXrBPt13K3U4mvxpLHoQH8Zg";
 app.get("/",(req,res)=>{
     fetchToken();
     res.send("hello welcome");
@@ -64,19 +65,16 @@ app.get("/auth",function(req,res){
         })
 
         .then(response => response.json())
-        if(response.ok){
-            const data=response.json();
-            const token=data.access_token;
-            console.log(token);
-        }
+        .then(data => token=data.access_token)
+        .then(res.send(token))
         
 });
 
 
 app.get("/trains",(req,res)=>{
-    fetchToken();
+    // fetchToken();
     const headers = new Headers({
-        'Authorization': `Bearer ${bearerToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
        });
        
@@ -86,23 +84,27 @@ app.get("/trains",(req,res)=>{
         headers: headers
        })
        .then(response => response.json())
-       .then(data => res.send(data))
+       .then(data => trains=data)
+       .then(console.log(trains))
+       .then(res.send(trains))
        .catch(error => console.error('Error:', error));
 
 })
 app.get("/trains/:trainNo",(req,res)=>{
-    fetchToken();
+    // fetchToken();
     var trainNo=req.params.trainNo;
     const headers=new Headers({
-        'Authorization': `Bearer ${bearerToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
     });
-    fetch(`http://20.244.56.144/train/trains/${trainNo}`, {
+    fetch(`http://20.244.56.144/train/trains/`, {
  method: 'GET',
  headers: headers
 })
 .then(response => response.json())
-.then(data => console.log(data))
+.then(data => trains=data)
+.then(console.log(trains))
+
 .catch(error => console.error('Error:', error));
 })
 
