@@ -1,28 +1,62 @@
 const express=require("express")
 const axios=require("axios");
-
+const apiUrl=''
 const app=express();
 let trains=[];
-let train;
-let token;
-let bearerToken="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTU0NTcyNTMsImNvbXBhbnlOYW1lIjoiVHJhaW4gQ2VudHJhbCIsImNsaWVudElEIjoiOTY5MDRmNzItMTdjNy00MzY1LThkYTEtOTRmZWFhZWRlMTkwIiwib3duZXJOYW1lIjoiIiwib3duZXJFbWFpbCI6IiIsInJvbGxObyI6IjIwSjQxQTA1MTkifQ.oYxQfRaOcaeaPLogIx_VXrBPt13K3U4mvxpLHoQH8Zg";
+let train=null;
+let token=null;
+let bearerToken=null;
 app.get("/",(req,res)=>{
-    res.send("hello welcome");
+    res.write("WELCOME TO RAILWAY APP \n");
+    res.write("TO REGISTER COMPANY USE RELATIVE PATH /register \n");
+    res.write("TO GET THE AUTHORIZATION TOKEN USE RELATIVE PATH /auth   \n");
+    res.write("TO GET ALL THE TRAIN LIST USE RELATIVE PATH /trains   \n");
+    res.write("TO GET THE SPECIFIC TRAIN BY USING TRAIN NUMBER  USE RELATIVE PATH /trains/trainNumber   ex:/trains/2344");
+
+    res.end();
+
 });
 
+async function fetchToken(){
+    const authBody={
+        "companyName":"Train Central",
+        "clientID":"96904f72-17c7-4365-8da1-94feaaede190",
+        "clientSecret":"gLCkwdhRXXqcMjRY",
+        "ownerName":"Laxman",
+        "ownerEmail":"vasudevds1729@gmail.com",
+        "rollNo":"20J41A0519"
+    
+};
+const data=await fetch('http://20.244.56.144/train/auth',{
+    method:'post',
+    headers:{
+        'Content-Type': 'application/json'
+    },
+    body:JSON.stringify(authBody)
+});
+const response=await data.json();
+bearerToken=response.access_token;
 
+}
 
    
-
+app.get("/register",(req,res)=>{
+    res.sendFile(__dirname+"/companyRegistrationForm.htm");
+})
 
 
 app.post("/register",function(req,res){
     var company={
-        "companyName":"Train Central",
-        "ownerName":"Laxman",
-        "rollNo":"20J41A0519",
-        "ownerEmail":"vasudevds1729@gmail.com",
-        "accessCode":"IrVNez"
+        // "companyName":"Train Central",
+        // "ownerName":"Laxman",
+        // "rollNo":"20J41A0519",
+        // "ownerEmail":"vasudevds1729@gmail.com",
+        // "accessCode":"IrVNez"
+        "companyName":req.body.companyName,
+        "ownerName":req.body.ownerName,
+        "rollNo":req.body.rollNumber,
+        "ownerEmail":req.body.ownerMail,
+        "accessCode":req.body.accessCode
     };
 
     fetch('http://20.244.56.144/train/register', {
@@ -45,7 +79,7 @@ app.post("/register",function(req,res){
     });
 
 });
-app.get("/auth",function(req,res){
+app.get("/auth",async function(req,res){
     const authBody={
             "companyName":"Train Central",
             "clientID":"96904f72-17c7-4365-8da1-94feaaede190",
@@ -55,25 +89,29 @@ app.get("/auth",function(req,res){
             "rollNo":"20J41A0519"
         
     };
-    fetch('http://20.244.56.144/train/auth', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+    const data=await fetch('http://20.244.56.144/train/auth',{
+        method:'post',
+        headers:{
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(authBody),
-        })
+        body:JSON.stringify(authBody)
+    });
+    const response=await data.json();
+    bearerToken=response.access_token;
 
-        .then(response => response.json())
-        .then(data => token=data.access_token)
-        .then(res.send(token))
-        
+
+    res.write(bearerToken);
+    res.write("\n above is your bearer token \n");
+    res.end();
+    // res.send(bearerToken);
+
 });
 
 
 app.get("/trains",(req,res)=>{
-    // fetchToken();
+    fetchToken();
     const headers = new Headers({
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${bearerToken}`,
         'Content-Type': 'application/json'
        });
        
@@ -90,20 +128,26 @@ app.get("/trains",(req,res)=>{
 
 })
 app.get("/trains/:trainNo",(req,res)=>{
-    // fetchToken();
-    var trainNo=req.params.trainNo;
+    fetchToken();
+    var trainNo=parseInt(req.params.trainNo);
+    console.log(trainNo);
+    console.log(typeof(trainNo));
+    var url='http://20.244.56.144/train/trains/'+trainNo;
+    console.log(url);
+    var trainNo=parseInt(req.params.trainNo);
     const headers=new Headers({
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${bearerToken}`,
         'Content-Type': 'application/json'
     });
-    fetch(`http://20.244.56.144/train/trains/`, {
- method: 'GET',
- headers: headers
+    fetch(url, {
+    method: 'GET',
+    headers: headers
 })
 .then(response => response.json())
-.then(data => trains=data)
-.then(console.log(trains))
-
+.then(data => {
+    console.log(data);
+    res.send(data);
+})
 .catch(error => console.error('Error:', error));
 })
 
